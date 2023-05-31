@@ -7,7 +7,7 @@ Bu, Rust programlama dili kullanılarak CHIP-8 sanal işlemcisinin basit bir em�
 1. Bu projeyi yerel bilgisayarınıza kopyalayın: 
 
 ```
-git clone https://github.com/aliha-tadal/chip8-emulator.git
+git clone https://github.com/alihan-tadal/chip8-emulator.git
 ```
 
 2. Rust programlama dilini yükleyin: [https://www.rust-lang.org/tools/install](https://www.rust-lang.org/tools/install)
