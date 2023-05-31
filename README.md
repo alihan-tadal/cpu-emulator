@@ -15,7 +15,7 @@ git clone https://github.com/alihan-tadal/cpu-emulator.git
 3. Projeyi aşağıdaki komutla derleyin ve çalıştırın:
 
 ```
-cd chip8-emulator
+cd cpu-emulator
 cargo run
 ```
 
