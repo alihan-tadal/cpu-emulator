@@ -93,6 +93,28 @@ impl Emu {
                 let nnn = op & 0x0FFF;
                 self.pc = nnn;
             }
+            (2, _, _, _) => {
+                let nnn = op & 0x0FFF;
+                self.push(self.pc);
+                self.pc = nnn;
+            }
+            (3, _, _, _) => { 
+                // http://devernay.free.fr/hacks/chip8/C8TECH10.HTM#3xkk
+                let x = digit2 as usize;
+                let nn = (op & 0xFF) as u8;
+                if self.v_regs[x] == nn {
+                    self.pc += 2;
+                }
+            }
+            (4, _, _, _) => {
+                let x = digit2 as usize;
+                let nn = (op & 0xFF) as u8;
+                if self.v_regs[x] != nn {
+                    self.pc +=2;
+                }
+            }
+
+
         }
     }
     pub fn tick_timers(&mut self) {
