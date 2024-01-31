@@ -107,14 +107,83 @@ impl Emu {
                 }
             }
             (4, _, _, _) => {
+                //  Skip next if VX != NN
                 let x = digit2 as usize;
                 let nn = (op & 0xFF) as u8;
                 if self.v_regs[x] != nn {
                     self.pc +=2;
                 }
             }
+            (5, _, _, 0) => {
+                // Skip next if VX == VY
+                let x = digit2 as usize;
+                let y = digit3 as usize;
 
+                if self.v_regs[x] == self.v_regs[y] {
+                    self.pc += 2;
+                }
+            }
+            (6, _, _, _) => {
+                let x = digit2 as usize;
+                let nn = (op & 0xFF) as u8;
+                self.v_regs[x] = nn;
+            }
+            (7, _, _, _) => {
+                // 7xnn - ADD Vx, byte
+                // Set Vx = Vx + nn.
+                // Adds the value nn to the value of register Vx, then stores the result in Vx.
+                let x = digit2 as usize;
+                let nn = (op & 0xFF) as u8;
+                self.v_regs[x] = self.v_regs[x].wrapping_add(nn); // May overflow, dont't panic. Use wrapping add instead.               
+            }
+            (8, _, _, 0) => {
+                // Set Vx = Vy.
+                // Stores the value of register Vy in register Vx.
+                let x = digit2 as usize;
+                let y = digit3 as usize;
+                self.v_regs[x] = self.v_regs[y];
+            }
+            (8, _, _, 1) => {
+                // 8xy1 - OR Vx, Vy
+                // Set Vx = Vx OR Vy.
+                // Performs a bitwise OR on the values of Vx and Vy, then stores the result in Vx. A bitwise OR compares the corrseponding bits from two values, and if either bit is 1, then the same bit in the result is also 1. Otherwise, it is 0.
+                let x = digit2 as usize;
+                let y = digit3 as usize;
 
+                self.v_regs[x] |= self.v_regs[y];
+            }
+            (8, _, _, 2) => {
+                // 8xy2 - AND Vx, Vy
+                // Set Vx = Vx AND Vy.
+                // Performs a bitwise AND on the values of Vx and Vy, then stores the result in Vx. A bitwise AND compares the corrseponding bits from two values, and if both bits are 1, then the same bit in the result is also 1. Otherwise, it is 0.
+                let x = digit2 as usize;
+                let y = digit3 as usize;
+
+                self.v_regs[x] &= self.v_regs[y];
+            }
+            (8, _, _, 3) => {
+                // 8xy3 - XOR Vx, Vy
+                // Set Vx = Vx XOR Vy.
+                // Performs a bitwise exclusive OR on the values of Vx and Vy, then stores the result in Vx. An exclusive OR compares the corrseponding bits from two values, and if the bits are not both the same, then the corresponding bit in the result is set to 1. Otherwise, it is 0.
+                let x = digit2 as usize;
+                let y = digit3 as usize;
+
+                self.v_regs[x] ^= self.v_regs[y];
+            }
+            (8, _, _, 4) => {
+                // 8xy4 - ADD Vx, Vy
+                // Set Vx = Vx + Vy, set VF = carry.
+                // The values of Vx and Vy are added together. If the result is greater than 8 bits (i.e., > 255,) VF is set to 1, otherwise 0. Only the lowest 8 bits of the result are kept, and stored in Vx.
+                let x = digit2 as usize;
+                let y = digit3 as usize;
+
+                // Set carry 1 if overflow.
+                let (new_vx, carry) = self.v_regs[x].overflowing_add(self.v_regs[y]); 
+                let new_vf = if carry {1}  else {0};
+
+                self.v_regs[x] = new_vx;
+                self.v_regs[0xF] = new_vf;
+            }
         }
     }
     pub fn tick_timers(&mut self) {
