@@ -184,6 +184,22 @@ impl Emu {
                 self.v_regs[x] = new_vx;
                 self.v_regs[0xF] = new_vf;
             }
+            (8, _, _, 5) => {
+                let x = digit2 as usize;
+                let y = digit3 as usize;
+                let (new_vx, borrow) = self.v_regs[x].overflowing_sub(self.v_regs[y]);
+                let new_vf = if borrow {0} else {1};
+
+                self.v_regs[x] = new_vx;
+                self.v_regs[0xF] = new_vf;
+            }
+            (8, _, _, 6) => {
+                let x = digit2 as usize;
+                let lsb = self.v_regs[x] & 1;
+                self.v_regs[x] >> 1;
+                self.v_regs[0xF] = lsb;
+            }
+
         }
     }
     pub fn tick_timers(&mut self) {
