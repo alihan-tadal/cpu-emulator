@@ -1,3 +1,5 @@
+use std::net::UdpSocket;
+
 use rand::random;
 
 pub const SCREEN_WIDTH: usize = 64;
@@ -34,10 +36,10 @@ pub struct Emu {
     v_regs: [u8; NUM_REGS],                       // V0 - VF
     i_reg: u16,                                   // I register
     sp: u16,                                      // Stack Pointer
-    stack: [u16; 16],                             // 
+    stack: [u16; 16],                             //
     keys: [bool; NUM_KEYS],
-    dt: u8,                                       // Delay Timer
-    st: u8,                                       // Sound Timer, emits a beep when it reaches 0
+    dt: u8, // Delay Timer
+    st: u8, // Sound Timer, emits a beep when it reaches 0
 }
 
 const START_ADDRES: u16 = 0x200; // Because the first 512 bytes are reserved for CHIP-8 interpreter
@@ -252,7 +254,7 @@ impl Emu {
                     let addr = self.i_reg + y_line as u16;
                     let pixels = self.ram[addr as usize];
                     for x_line in 0..8 {
-                        if (pixels & (0b1000_0000 >> x_line)) !=0 {
+                        if (pixels & (0b1000_0000 >> x_line)) != 0 {
                             let x = (x_coord + x_line) as usize % SCREEN_HEIGHT;
                             let y = (y_coord + y_line) as usize % SCREEN_HEIGHT;
 
@@ -319,9 +321,38 @@ impl Emu {
                 let vx = self.v_regs[x] as u16;
                 self.i_reg = self.i_reg.wrapping_add(vx);
             }
-            
+            (0xF, _, 2, 9) => {
+                let x = digit2 as usize;
+                let c = self.v_regs[x] as u16;
+                self.i_reg = c * 5;
+            }
+            (0xF, _, 3, 3) => {
+                let x = digit2 as usize;
+                let vx = self.v_regs[x] as f32;
 
+                let hundreds = (vx / 100.0).floor() as u8;
+                let tens = ((vx / 10.0) % 10.0).floor() as u8;
+                let ones = (vx % 10.0) as u8;
 
+                self.ram[self.i_reg as usize] = hundreds;
+                self.ram[(self.i_reg + 1) as usize] = tens;
+                self.ram[(self.i_reg + 2) as usize] = ones;
+            }
+            (0xF, _, 5, 5) => {
+                let x = digit2 as usize;
+                let i = self.i_reg as usize;
+                for idx in 0..=x {
+                    self.ram[i + idx] = self.v_regs[idx];
+                }
+            }
+            (0xF, _, 6, 5) => {
+                let x = digit2 as usize;
+                let i = self.i_reg as usize;
+
+                for idx in 0..=x {
+                    self.v_regs[idx] = self.ram[i + idx];
+                }
+            }
         }
     }
     pub fn tick_timers(&mut self) {
